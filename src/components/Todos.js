@@ -56,12 +56,28 @@ const Todos = () => {
         setInput(e.target.value);
     }
 
+    const headers = { 
+        "Authorization" : "Bearer access_token",
+        "Content-Type" : "application/json"
+    }
     const onSubmitTodo = async () => {
-        await axios.post(`${BASE_URL}/todos`, {
-            todo : input,
-        }, {
-            headers : `Bearer ${localStorage.getItem('signin-token')}`
-        })
+        const token = localStorage.getItem('signin-token');
+        try{
+            await axios.post(`${BASE_URL}/todos`, 
+                {
+                    todo : input,
+                }, 
+                {
+                    // 이 한 줄을 위해 얼마나 오류를 많이 겪었는지,,, 눙물이,,
+                    headers : {Authorization : `Bearer ${token}`}
+                }
+            ).then(
+                (res) => console.log(res)
+            )
+        }catch(err){
+            console.log(err)
+        }
+        
     }
 
     return (
