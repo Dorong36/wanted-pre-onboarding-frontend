@@ -6,10 +6,10 @@ import { BASE_URL } from '../api/base';
 const Todos = () => {
 
     const navigate = useNavigate();
+    const token = localStorage.getItem('signin-token');
 
     const [input, setInput] = useState('');
     const [todos, setTodos] = useState([]);
-    const [token, setToken] = useState('')
 
     // 확인용 로그아웃 기능 구현
     const onClickLogout = () => {
@@ -21,47 +21,36 @@ const Todos = () => {
         }
     }
 
-    // todos 가져오기
-    // const getTodos = async () => {
-    //     const gotTodos = await axios.get(`${BASE_URL}/todos`, {
-    //         headers : {
-    //             Authorization : localStorage.getItem('signin-token')
-    //         }
-    //     })
-    //     setTodos(gotTodos);
-    // }
-
     // 로컬저장소에 토큰이 없으면 singin으로 이동
     useEffect(()=>{
         if(localStorage.getItem('signin-token')=== null){
             navigate('/signin');
         } else {
-            // getTodos();
-            // setToken(localStorage.getItem('signin-token'));
-            // try{
-            //     axios.get(`${BASE_URL}/todos`, {
-            //         headers : {
-            //             Authorization : token.toString
-            //         }
-            //     }).then((res)=>{
-            //         setTodos(res)
-            //     })
-            // }catch(err){
-            //     console.log(err)
-            // }
+            getTodos();
         }
     },[])
 
-    const onChange = (e) => {
+    const onChangeInput = (e) => {
         setInput(e.target.value);
     }
 
-    const headers = { 
-        "Authorization" : "Bearer access_token",
-        "Content-Type" : "application/json"
+    // todos 가져오기
+    const getTodos = async () => {
+        try{
+            const gotTodos = await axios.get(`${BASE_URL}/todos`, {
+                headers : {
+                    Authorization : `Bearer ${token}`
+                }
+            })
+            setTodos(gotTodos.data);
+            console.log(todos);
+        }catch(err) {
+            console.log(err);
+        }
     }
+
+    // 할일 등록
     const onSubmitTodo = async () => {
-        const token = localStorage.getItem('signin-token');
         try{
             await axios.post(`${BASE_URL}/todos`, 
                 {
@@ -72,28 +61,53 @@ const Todos = () => {
                     headers : {Authorization : `Bearer ${token}`}
                 }
             ).then(
-                (res) => console.log(res)
+                (res) => {
+                    console.log(res);
+                    setInput('');
+                    getTodos();
+                }
             )
         }catch(err){
             console.log(err)
         }
-        
+    }
+
+    // 할일 수정
+
+
+    // 할일 삭제
+    const onDeleteTodo = async (e) => {
+        try{
+            await axios.delete(`${BASE_URL}/todos/${e.target.name}`,
+                {
+                    headers : {Authorization : `Bearer ${token}`}
+                }
+            ).then(
+                (res) => {
+                    console.log(res);
+                    getTodos();
+                }
+            )
+        }catch(err){
+            console.log(err);
+        }
     }
 
     return (
         <div>
             <h1>ToDo</h1>
-            <input type="text" onChange={onChange} value={input}/><button onClick={onSubmitTodo}>등록</button>
+            <input type="text" onChange={onChangeInput} value={input}/><button onClick={onSubmitTodo}>등록</button>
             <ul>
-                {/* {
-                    todos.map((todo, i) => {
-                        <li>
-                            <input type="checkbox" name="done" id="" checked={todo.isCompleted}/>{todo.todo}
-                            <button>수정</button>
-                            <button>삭제</button>
+                {
+                    todos.map((todo) => (
+                        <li key={todo.id}>
+                            <input type="checkbox" name="done" id="" checked={todo.isCompleted}/>
+                            {todo.todo}
+                            <button name={todo.id}>수정</button>
+                            <button onClick={onDeleteTodo} name={todo.id}>삭제</button>
                         </li>
-                    })
-                } */}
+                    ))
+                }
             </ul>
             
             <hr/>
